@@ -117,6 +117,9 @@ class MainWindow:
                 figure = DataPlotter.plot_data(empty_data.astype(float))
                 self.display_figure(figure)
                 
+                # Broadcast initial coordinates to open windows
+                self._broadcast_coordinates()
+                
                 messagebox.showinfo("Success", f"Loaded {len(labels)} channels")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load processor: {str(e)}")
@@ -145,6 +148,9 @@ class MainWindow:
                 self.y_value_label.config(text=str(max(1, y_size-1)))
                 self.x_input_var.set("0")
                 self.y_input_var.set(str(max(1, y_size-1)))
+                
+                # Broadcast coordinates to open windows
+                self._broadcast_coordinates()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to select channel: {str(e)}")
     
@@ -159,7 +165,9 @@ class MainWindow:
     
     def on_open_cross_section(self):
         """断面表示ウィンドウを開くコールバック"""
-        CrossSectionWindow(self.root)
+        window = CrossSectionWindow(self.root)
+        # 現在の座標を新しいウィンドウに送信
+        self._broadcast_coordinates()
     
     def display_figure(self, figure):
         """Matplotlib figureを表示"""
@@ -171,17 +179,27 @@ class MainWindow:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
+    def _broadcast_coordinates(self):
+        """現在の座標をすべての開いているサブウィンドウに送信"""
+        x_val = float(self.x_slider.get())
+        y_val = float(self.y_slider.get())
+        
+        for window in CrossSectionWindow.get_instances():
+            window.update_coordinates(x_val, y_val)
+    
     def on_x_slider_change(self, value):
         """X軸スライダー変更時のコールバック"""
         x_val = float(value)
         self.x_value_label.config(text=f"{x_val:.0f}")
         self.x_input_var.set(f"{x_val:.0f}")
+        self._broadcast_coordinates()
     
     def on_y_slider_change(self, value):
         """Y軸スライダー変更時のコールバック"""
         y_val = float(value)
         self.y_value_label.config(text=f"{y_val:.0f}")
         self.y_input_var.set(f"{y_val:.0f}")
+        self._broadcast_coordinates()
     
     def on_x_input_change(self, event):
         """X軸テキスト入力変更時のコールバック"""
@@ -193,6 +211,7 @@ class MainWindow:
             x_val = max(x_min, min(x_max, x_val))
             self.x_slider.set(x_val)
             self.x_value_label.config(text=f"{x_val:.0f}")
+            self._broadcast_coordinates()
         except ValueError:
             pass  # 無効な数値は無視
     
@@ -206,5 +225,6 @@ class MainWindow:
             y_val = max(y_min, min(y_max, y_val))
             self.y_slider.set(y_val)
             self.y_value_label.config(text=f"{y_val:.0f}")
+            self._broadcast_coordinates()
         except ValueError:
             pass  # 無効な数値は無視
