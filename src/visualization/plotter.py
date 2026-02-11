@@ -72,7 +72,7 @@ class DataPlotter:
         figure = Figure(figsize=config.FIGURE_SIZE, dpi=config.DPI)
         ax = figure.add_subplot(111)
         
-        im = ax.imshow(xz_slice.T, aspect='equal', origin='lower', 
+        im = ax.imshow(xz_slice.T, aspect='auto', origin='lower', 
                       cmap=config.DEFAULT_COLORMAP,
                       extent=[0, x_size, 0, z_size])
         ax.set_xlabel('x')
