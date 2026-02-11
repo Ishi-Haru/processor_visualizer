@@ -113,6 +113,10 @@ class ControlFrame(ttk.Frame):
         # Open cross section window button
         self.cross_section_button = ttk.Button(self, text="断面表示を開く")
         self.cross_section_button.pack(side=tk.LEFT, padx=5)
+        
+        # Open line display window button
+        self.line_display_button = ttk.Button(self, text="ライン表示を開く")
+        self.line_display_button.pack(side=tk.LEFT, padx=5)
     
     def get_channel_index(self) -> int:
         """選択されたチャンネルのインデックスを取得"""
@@ -152,6 +156,10 @@ class ControlFrame(ttk.Frame):
     def bind_cross_section_open(self, callback):
         """断面表示を開くボタンのコールバックを設定"""
         self.cross_section_button.config(command=callback)
+    
+    def bind_line_display_open(self, callback):
+        """ライン表示を開くボタンのコールバックを設定"""
+        self.line_display_button.config(command=callback)
     
     def bind_channel_change(self, callback):
         """チャンネル選択変更のコールバックを設定"""

@@ -8,6 +8,7 @@ from ..core.processor_manager import ProcessorManager
 from ..visualization.plotter import DataPlotter
 from .widgets import ControlFrame, InfoFrame
 from .cross_section_window import CrossSectionWindow
+from .line_display_window import LineDisplayWindow
 
 
 matplotlib.use('TkAgg')
@@ -37,6 +38,7 @@ class MainWindow:
         self.control_frame.bind_channel_change(self.on_channel_selected)
         self.control_frame.bind_visualize(self.on_visualize)
         self.control_frame.bind_cross_section_open(self.on_open_cross_section)
+        self.control_frame.bind_line_display_open(self.on_open_line_display)
         
         # Info frame
         self.info_frame = InfoFrame(self.root)
@@ -157,6 +159,16 @@ class MainWindow:
     def on_visualize(self):
         """可視化コールバック"""
         try:
+            # リストボックスで現在選択されているチャンネルを再選択
+            selected_index = self.control_frame.get_channel_index()
+            if selected_index < 0:
+                messagebox.showwarning("Warning", "No channel selected")
+                return
+            
+            # 明示的にチャンネルを選択し直す（サブウィンドウで上書きされている可能性があるため）
+            self.processor_manager.select_channel(selected_index)
+            
+            # データを取得してプロット
             data = self.processor_manager.extract_data()
             figure = DataPlotter.plot_data(data)
             self.display_figure(figure)
@@ -166,6 +178,12 @@ class MainWindow:
     def on_open_cross_section(self):
         """断面表示ウィンドウを開くコールバック"""
         window = CrossSectionWindow(self.root, self.processor_manager)
+        # 現在の座標を新しいウィンドウに送信
+        self._broadcast_coordinates()
+    
+    def on_open_line_display(self):
+        """ライン表示ウィンドウを開くコールバック"""
+        window = LineDisplayWindow(self.root, self.processor_manager)
         # 現在の座標を新しいウィンドウに送信
         self._broadcast_coordinates()
     
@@ -185,6 +203,9 @@ class MainWindow:
         y_val = float(self.y_slider.get())
         
         for window in CrossSectionWindow.get_instances():
+            window.update_coordinates(x_val, y_val)
+        
+        for window in LineDisplayWindow.get_instances():
             window.update_coordinates(x_val, y_val)
     
     def on_x_slider_change(self, value):

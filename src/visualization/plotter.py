@@ -122,4 +122,44 @@ class DataPlotter:
         ax.grid(True, alpha=0.3)
         
         return figure
+    
+    @staticmethod
+    def plot_xy_line(x_data: np.ndarray, y_data: np.ndarray, 
+                     x_label: str = "X Channel", y_label: str = "Y Channel",
+                     x_coord: int = 0, y_coord: int = 0) -> Figure:
+        """
+        2つのチャンネルのデータをXY座標でプロット
+        
+        Args:
+            x_data: 横軸データ（Z方向の1D配列）
+            y_data: 縦軸データ（Z方向の1D配列）
+            x_label: 横軸のラベル
+            y_label: 縦軸のラベル
+            x_coord: X座標
+            y_coord: Y座標
+            
+        Returns:
+            matplotlib Figure オブジェクト
+        """
+        if not isinstance(x_data, np.ndarray):
+            x_data = np.asarray(x_data)
+        if not isinstance(y_data, np.ndarray):
+            y_data = np.asarray(y_data)
+        
+        if x_data.ndim != 1 or y_data.ndim != 1:
+            raise ValueError(f"Expected 1D data, got {x_data.ndim}D and {y_data.ndim}D")
+        
+        if len(x_data) != len(y_data):
+            raise ValueError(f"Data length mismatch: x={len(x_data)}, y={len(y_data)}")
+        
+        figure = Figure(figsize=config.FIGURE_SIZE, dpi=config.DPI)
+        ax = figure.add_subplot(111)
+        
+        ax.plot(x_data, y_data, marker='o', linestyle='-', linewidth=2, markersize=4)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_title(f'XY Plot at (x={x_coord}, y={y_coord})')
+        ax.grid(True, alpha=0.3)
+        
+        return figure
 
