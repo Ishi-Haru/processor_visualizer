@@ -165,7 +165,7 @@ class MainWindow:
     
     def on_open_cross_section(self):
         """断面表示ウィンドウを開くコールバック"""
-        window = CrossSectionWindow(self.root)
+        window = CrossSectionWindow(self.root, self.processor_manager)
         # 現在の座標を新しいウィンドウに送信
         self._broadcast_coordinates()
     
