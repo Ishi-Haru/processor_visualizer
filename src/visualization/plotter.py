@@ -75,6 +75,7 @@ class DataPlotter:
         im = ax.imshow(xz_slice.T, aspect='auto', origin='lower', 
                       cmap=config.DEFAULT_COLORMAP,
                       extent=[0, x_size, 0, z_size])
+        ax.set_box_aspect(1)  # 表示領域を正方形に固定
         ax.set_xlabel('x')
         ax.set_ylabel('z')
         ax.set_title(f'Cross-section at y={y_index} (shape {xz_slice.shape})')
