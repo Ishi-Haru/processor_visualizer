@@ -139,17 +139,24 @@ class MainWindow:
                 
                 self.info_frame.update_info(info_text)
                 
+                # 現在の座標値を取得
+                current_x = float(self.x_slider.get())
+                current_y = float(self.y_slider.get())
+                
                 # Update slider ranges based on channel size
                 self.x_slider.config(from_=0, to=max(1, x_size-1))
                 self.y_slider.config(from_=max(1, y_size-1), to=0)
                 
-                # Reset sliders to 0
-                self.x_slider.set(0)
-                self.y_slider.set(max(1, y_size-1))
-                self.x_value_label.config(text="0")
-                self.y_value_label.config(text=str(max(1, y_size-1)))
-                self.x_input_var.set("0")
-                self.y_input_var.set(str(max(1, y_size-1)))
+                # 座標を新しい範囲内に制限して保持
+                new_x = max(0, min(current_x, x_size-1))
+                new_y = max(0, min(current_y, y_size-1))
+                
+                self.x_slider.set(new_x)
+                self.y_slider.set(new_y)
+                self.x_value_label.config(text=f"{new_x:.0f}")
+                self.y_value_label.config(text=f"{new_y:.0f}")
+                self.x_input_var.set(f"{new_x:.0f}")
+                self.y_input_var.set(f"{new_y:.0f}")
                 
                 # Broadcast coordinates to open windows
                 self._broadcast_coordinates()
