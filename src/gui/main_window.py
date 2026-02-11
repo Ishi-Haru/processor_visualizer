@@ -42,9 +42,50 @@ class MainWindow:
         self.info_frame = InfoFrame(self.root)
         self.info_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         
-        # Canvas frame
+        # Canvas frame with grid layout for sliders
         self.canvas_frame = ttk.Frame(self.root)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Configure grid weights
+        self.canvas_frame.grid_rowconfigure(1, weight=1)
+        self.canvas_frame.grid_columnconfigure(1, weight=1)
+        
+        # Y-axis controls (left side)
+        y_left_frame = ttk.Frame(self.canvas_frame)
+        y_left_frame.grid(row=1, column=0, sticky=tk.NSEW, padx=(0, 5))
+        
+        ttk.Label(y_left_frame, text="Y:").pack(side=tk.TOP, pady=5)
+        self.y_slider = ttk.Scale(y_left_frame, orient=tk.VERTICAL, from_=100, to=0, command=self.on_y_slider_change)
+        self.y_slider.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
+        self.y_value_label = ttk.Label(y_left_frame, text="0")
+        self.y_value_label.pack(side=tk.TOP, pady=5)
+        
+        # Y-axis text input
+        self.y_input_var = tk.StringVar(value="0")
+        y_input = ttk.Entry(y_left_frame, textvariable=self.y_input_var, width=6)
+        y_input.pack(side=tk.TOP, pady=5)
+        y_input.bind('<Return>', self.on_y_input_change)
+        
+        # Matplotlib canvas (center)
+        self.mpl_canvas_frame = ttk.Frame(self.canvas_frame)
+        self.mpl_canvas_frame.grid(row=1, column=1, sticky=tk.NSEW)
+        
+        # X-axis controls (bottom)
+        x_bottom_frame = ttk.Frame(self.canvas_frame)
+        x_bottom_frame.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=(5, 0))
+        
+        ttk.Label(x_bottom_frame, text="X:").pack(side=tk.LEFT, padx=5)
+        self.x_slider = ttk.Scale(x_bottom_frame, orient=tk.HORIZONTAL, from_=0, to=100, command=self.on_x_slider_change)
+        self.x_slider.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        self.x_value_label = ttk.Label(x_bottom_frame, text="0", width=5)
+        self.x_value_label.pack(side=tk.LEFT, padx=5)
+        
+        # X-axis text input
+        ttk.Label(x_bottom_frame, text="入力:").pack(side=tk.LEFT, padx=(20, 5))
+        self.x_input_var = tk.StringVar(value="0")
+        x_input = ttk.Entry(x_bottom_frame, textvariable=self.x_input_var, width=6)
+        x_input.pack(side=tk.LEFT, padx=5)
+        x_input.bind('<Return>', self.on_x_input_change)
     
     def on_load_processor(self):
         """Processor読み込みコールバック"""
@@ -59,6 +100,18 @@ class MainWindow:
                 
                 # Load and display empty colormap immediately
                 x_size, y_size, z_size = self.processor_manager.get_data_size()
+                # Set slider ranges
+                self.x_slider.config(from_=0, to=max(1, x_size-1))
+                self.y_slider.config(from_=max(1, y_size-1), to=0)
+                
+                # Reset sliders to 0
+                self.x_slider.set(0)
+                self.y_slider.set(max(1, y_size-1))
+                self.x_value_label.config(text="0")
+                self.y_value_label.config(text=str(max(1, y_size-1)))
+                self.x_input_var.set("0")
+                self.y_input_var.set(str(max(1, y_size-1)))
+                
                 # Create empty 3D array (x_size, y_size, 1) filled with False/0
                 empty_data = np.zeros((x_size, y_size, 1), dtype=bool)
                 figure = DataPlotter.plot_data(empty_data.astype(float))
@@ -80,6 +133,18 @@ class MainWindow:
                 info_text += f"Data shape: x={x_size}, y={y_size}, z={z_size}"
                 
                 self.info_frame.update_info(info_text)
+                
+                # Update slider ranges based on channel size
+                self.x_slider.config(from_=0, to=max(1, x_size-1))
+                self.y_slider.config(from_=max(1, y_size-1), to=0)
+                
+                # Reset sliders to 0
+                self.x_slider.set(0)
+                self.y_slider.set(max(1, y_size-1))
+                self.x_value_label.config(text="0")
+                self.y_value_label.config(text=str(max(1, y_size-1)))
+                self.x_input_var.set("0")
+                self.y_input_var.set(str(max(1, y_size-1)))
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to select channel: {str(e)}")
     
@@ -102,6 +167,44 @@ class MainWindow:
         if self.canvas:
             self.canvas.get_tk_widget().destroy()
         
-        self.canvas = FigureCanvasTkAgg(figure, master=self.canvas_frame)
+        self.canvas = FigureCanvasTkAgg(figure, master=self.mpl_canvas_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    
+    def on_x_slider_change(self, value):
+        """X軸スライダー変更時のコールバック"""
+        x_val = float(value)
+        self.x_value_label.config(text=f"{x_val:.0f}")
+        self.x_input_var.set(f"{x_val:.0f}")
+    
+    def on_y_slider_change(self, value):
+        """Y軸スライダー変更時のコールバック"""
+        y_val = float(value)
+        self.y_value_label.config(text=f"{y_val:.0f}")
+        self.y_input_var.set(f"{y_val:.0f}")
+    
+    def on_x_input_change(self, event):
+        """X軸テキスト入力変更時のコールバック"""
+        try:
+            x_val = float(self.x_input_var.get())
+            # スライダーの範囲内に制限
+            x_min = float(self.x_slider.cget('from'))
+            x_max = float(self.x_slider.cget('to'))
+            x_val = max(x_min, min(x_max, x_val))
+            self.x_slider.set(x_val)
+            self.x_value_label.config(text=f"{x_val:.0f}")
+        except ValueError:
+            pass  # 無効な数値は無視
+    
+    def on_y_input_change(self, event):
+        """Y軸テキスト入力変更時のコールバック"""
+        try:
+            y_val = float(self.y_input_var.get())
+            # スライダーの範囲内に制限
+            y_min = float(self.y_slider.cget('to'))
+            y_max = float(self.y_slider.cget('from'))
+            y_val = max(y_min, min(y_max, y_val))
+            self.y_slider.set(y_val)
+            self.y_value_label.config(text=f"{y_val:.0f}")
+        except ValueError:
+            pass  # 無効な数値は無視
