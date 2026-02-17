@@ -36,8 +36,9 @@ class DataPlotter:
         xy = data[:, :, 0]
         x_size, y_size = xy.shape
         
-        im = ax.imshow(xy.T, aspect='equal', origin='lower', cmap=config.DEFAULT_COLORMAP,
+        im = ax.imshow(xy.T, aspect='auto', origin='lower', cmap=config.DEFAULT_COLORMAP,
                       extent=[0, x_size, 0, y_size])
+        ax.set_box_aspect(1)  # Display area as square
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_title(f'xy plane (shape {xy.shape})')
