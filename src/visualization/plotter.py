@@ -8,12 +8,14 @@ class DataPlotter:
     """データプロットを行うクラス"""
     
     @staticmethod
-    def plot_data(data: np.ndarray) -> Figure:
+    def plot_data(data: np.ndarray, vmin: float = None, vmax: float = None) -> Figure:
         """
         2Dデータ(z-size == 1)をカラーマップでプロット
         
         Args:
             data: 3D ndarray (z-size は必ず 1)
+            vmin: カラースケールの最小値 (Noneの場合は自動)
+            vmax: カラースケールの最大値 (Noneの場合は自動)
             
         Returns:
             matplotlib Figure オブジェクト
@@ -37,7 +39,7 @@ class DataPlotter:
         x_size, y_size = xy.shape
         
         im = ax.imshow(xy.T, aspect='auto', origin='lower', cmap=config.DEFAULT_COLORMAP,
-                      extent=[0, x_size, 0, y_size])
+                      extent=[0, x_size, 0, y_size], vmin=vmin, vmax=vmax)
         ax.set_box_aspect(1)  # Display area as square
         ax.set_xlabel('x')
         ax.set_ylabel('y')

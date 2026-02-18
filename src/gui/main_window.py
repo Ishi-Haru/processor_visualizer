@@ -24,6 +24,7 @@ class MainWindow:
         
         self.processor_manager = ProcessorManager()
         self.canvas = None
+        self.current_data = None  # Store current data for re-plotting
         
         self.setup_ui()
     
@@ -51,6 +52,7 @@ class MainWindow:
         # Configure grid weights
         self.canvas_frame.grid_rowconfigure(1, weight=1)
         self.canvas_frame.grid_columnconfigure(1, weight=1)
+        self.canvas_frame.grid_columnconfigure(2, weight=0)  # Right panel fixed width
         
         # Y-axis controls (left side)
         y_left_frame = ttk.Frame(self.canvas_frame)
@@ -71,6 +73,33 @@ class MainWindow:
         # Matplotlib canvas (center)
         self.mpl_canvas_frame = ttk.Frame(self.canvas_frame)
         self.mpl_canvas_frame.grid(row=1, column=1, sticky=tk.NSEW)
+        
+        # Color scale controls (right side)
+        color_scale_frame = ttk.LabelFrame(self.canvas_frame, text="カラースケール調整")
+        color_scale_frame.grid(row=1, column=2, sticky=tk.NSEW, padx=(5, 0))
+        
+        ttk.Label(color_scale_frame, text="最小値 (vmin):").pack(pady=(10, 0))
+        self.vmin_var = tk.StringVar(value="auto")
+        self.vmin_entry = ttk.Entry(color_scale_frame, textvariable=self.vmin_var, width=15)
+        self.vmin_entry.pack(pady=5)
+        self.vmin_entry.bind('<Return>', self.on_color_scale_change)
+        
+        ttk.Label(color_scale_frame, text="最大値 (vmax):").pack(pady=(10, 0))
+        self.vmax_var = tk.StringVar(value="auto")
+        self.vmax_entry = ttk.Entry(color_scale_frame, textvariable=self.vmax_var, width=15)
+        self.vmax_entry.pack(pady=5)
+        self.vmax_entry.bind('<Return>', self.on_color_scale_change)
+        
+        # Apply and Auto buttons
+        btn_frame = ttk.Frame(color_scale_frame)
+        btn_frame.pack(pady=10)
+        ttk.Button(btn_frame, text="適用", command=self.on_color_scale_change).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="自動", command=self.on_color_scale_auto).pack(side=tk.LEFT, padx=5)
+        
+        # Info label for current data range
+        ttk.Label(color_scale_frame, text="データ範囲:").pack(pady=(20, 0))
+        self.data_range_label = ttk.Label(color_scale_frame, text="-", wraplength=150)
+        self.data_range_label.pack(pady=5)
         
         # X-axis controls (bottom)
         x_bottom_frame = ttk.Frame(self.canvas_frame)
@@ -116,8 +145,10 @@ class MainWindow:
                 
                 # Create empty 3D array (x_size, y_size, 1) filled with False/0
                 empty_data = np.zeros((x_size, y_size, 1), dtype=bool)
-                figure = DataPlotter.plot_data(empty_data.astype(float))
+                self.current_data = empty_data.astype(float)
+                figure = DataPlotter.plot_data(self.current_data)
                 self.display_figure(figure)
+                self._update_data_range_info()
                 
                 # Broadcast initial coordinates to open windows
                 self._broadcast_coordinates()
@@ -177,8 +208,11 @@ class MainWindow:
             
             # データを取得してプロット
             data = self.processor_manager.extract_data()
-            figure = DataPlotter.plot_data(data)
+            self.current_data = data
+            vmin, vmax = self._get_color_scale_values()
+            figure = DataPlotter.plot_data(data, vmin=vmin, vmax=vmax)
             self.display_figure(figure)
+            self._update_data_range_info()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to visualize: {str(e)}")
     
@@ -256,3 +290,50 @@ class MainWindow:
             self._broadcast_coordinates()
         except ValueError:
             pass  # 無効な数値は無視
+    
+    def _get_color_scale_values(self):
+        """カラースケールの値を取得（vmin, vmax）"""
+        vmin = None
+        vmax = None
+        
+        vmin_str = self.vmin_var.get().strip().lower()
+        vmax_str = self.vmax_var.get().strip().lower()
+        
+        if vmin_str and vmin_str != "auto":
+            try:
+                vmin = float(vmin_str)
+            except ValueError:
+                pass
+        
+        if vmax_str and vmax_str != "auto":
+            try:
+                vmax = float(vmax_str)
+            except ValueError:
+                pass
+        
+        return vmin, vmax
+    
+    def on_color_scale_change(self, event=None):
+        """カラースケール変更コールバック"""
+        if self.current_data is not None:
+            try:
+                vmin, vmax = self._get_color_scale_values()
+                figure = DataPlotter.plot_data(self.current_data, vmin=vmin, vmax=vmax)
+                self.display_figure(figure)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to update color scale: {str(e)}")
+    
+    def on_color_scale_auto(self):
+        """カラースケールを自動に戻す"""
+        self.vmin_var.set("auto")
+        self.vmax_var.set("auto")
+        self.on_color_scale_change()
+    
+    def _update_data_range_info(self):
+        """現在のデータ範囲情報を更新"""
+        if self.current_data is not None:
+            data_min = np.min(self.current_data)
+            data_max = np.max(self.current_data)
+            self.data_range_label.config(text=f"Min: {data_min:.3e}\nMax: {data_max:.3e}")
+        else:
+            self.data_range_label.config(text="-")
