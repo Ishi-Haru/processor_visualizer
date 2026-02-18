@@ -332,8 +332,8 @@ class MainWindow:
     def _update_data_range_info(self):
         """現在のデータ範囲情報を更新"""
         if self.current_data is not None:
-            data_min = np.min(self.current_data)
-            data_max = np.max(self.current_data)
+            data_min = np.nanmin(self.current_data)
+            data_max = np.nanmax(self.current_data)
             self.data_range_label.config(text=f"Min: {data_min:.3e}\nMax: {data_max:.3e}")
         else:
             self.data_range_label.config(text="-")
