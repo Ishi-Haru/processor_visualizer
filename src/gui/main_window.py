@@ -40,6 +40,7 @@ class MainWindow:
         self.control_frame.bind_visualize(self.on_visualize)
         self.control_frame.bind_cross_section_open(self.on_open_cross_section)
         self.control_frame.bind_line_display_open(self.on_open_line_display)
+        self.control_frame.bind_export_csv(self.on_export_csv)
         
         # Info frame
         self.info_frame = InfoFrame(self.root)
@@ -337,3 +338,30 @@ class MainWindow:
             self.data_range_label.config(text=f"Min: {data_min:.3e}\nMax: {data_max:.3e}")
         else:
             self.data_range_label.config(text="-")
+    
+    def on_export_csv(self):
+        """CSV出力コールバック"""
+        if self.current_data is None:
+            messagebox.showwarning("Warning", "表示するデータがありません")
+            return
+        
+        # ファイル保存ダイアログを表示
+        file_path = filedialog.asksaveasfilename(
+            title="CSVファイルを保存",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+        
+        if not file_path:
+            return  # キャンセルされた場合
+        
+        try:
+            # 2D データを抽出 (z=0)
+            xy_data = self.current_data[:, :, 0]
+            
+            # CSVに保存
+            np.savetxt(file_path, xy_data, delimiter=',')
+            
+            messagebox.showinfo("Success", f"CSVファイルを保存しました:\n{file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"CSV保存に失敗しました: {str(e)}")

@@ -110,6 +110,10 @@ class ControlFrame(ttk.Frame):
         self.visualize_button = ttk.Button(self, text="Visualize")
         self.visualize_button.pack(side=tk.LEFT, padx=5)
         
+        # Export CSV button
+        self.export_csv_button = ttk.Button(self, text="CSV出力")
+        self.export_csv_button.pack(side=tk.LEFT, padx=5)
+        
         # Open cross section window button
         self.cross_section_button = ttk.Button(self, text="断面表示を開く")
         self.cross_section_button.pack(side=tk.LEFT, padx=5)
@@ -152,6 +156,10 @@ class ControlFrame(ttk.Frame):
     def bind_visualize(self, callback):
         """Visualize ボタンのコールバックを設定"""
         self.visualize_button.config(command=callback)
+    
+    def bind_export_csv(self, callback):
+        """CSV出力ボタンのコールバックを設定"""
+        self.export_csv_button.config(command=callback)
     
     def bind_cross_section_open(self, callback):
         """断面表示を開くボタンのコールバックを設定"""
